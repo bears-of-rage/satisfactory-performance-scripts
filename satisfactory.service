@@ -1,0 +1,17 @@
+[Unit]
+Description=Satisfactory dedicated server
+Wants=network-online.target
+After=syslog.target network.target nss-lookup.target network-online.target
+
+[Service]
+Environment="LD_LIBRARY_PATH=./linux64"
+ExecStart=/tmp/ramdisk/satisfactory/FactoryServer.sh -multihome=192.168.0.22 -ServerQUeryPort=16000
+User=steam
+Group=steam
+StandardOutput=journal
+Restart=on-failure
+WorkingDirectory=/tmp/ramdisk/satisfactory
+
+[Install]
+WantedBy=multi-user.target
+
