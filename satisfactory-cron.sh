@@ -24,7 +24,7 @@ if [ "$IS_STEAM_HERE" = "no" ]; then sudo apt install steamcmd -y; fi
 #install apache2 if needed
 echo "Checking for and if needed installing apache2"
 
-if [ ! -f /etc/systemd/system/apache2.service ]; then 
+if [ ! -f /lib/systemd/system/apache2.service ]; then 
   sudo apt install apache2 -y
   sudo systemctl enable apache2
   sudo systemctl start apache2
@@ -77,8 +77,8 @@ if [ ! -d $GAME_RD_LOC ]; then
 
   #Recreate Symlink
   #if satisfactory has not run before parent directory may not exist, create it.
-  if [ !-d $EPIC_LOC ]; then mkdir -p $EPIC_LOC; fi
-  
+  if [ ! -d $EPIC_LOC ]; then mkdir -p $EPIC_LOC; fi
+
   echo "Create new EPIC symlink to ensure saves write to Ramdrive"
   sudo ln -s $GAME_RD_SAVES $EPIC_LOC/Epic
 
