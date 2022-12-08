@@ -76,6 +76,9 @@ if [ ! -d $GAME_RD_LOC ]; then
   fi
 
   #Recreate Symlink
+  #if satisfactory has not run before parent directory may not exist, create it.
+  if [ !-d $EPIC_LOC ]; then mkdir -p $EPIC_LOC; fi
+  
   echo "Create new EPIC symlink to ensure saves write to Ramdrive"
   sudo ln -s $GAME_RD_SAVES $EPIC_LOC/Epic
 
