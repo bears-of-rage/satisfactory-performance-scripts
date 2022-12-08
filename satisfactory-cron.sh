@@ -16,10 +16,14 @@ GAME_RD_BINARIES="${GAME_RD_LOC}/binaries"
 WWW_ROOT="/var/www/html/"
 
 #install steamcmd if needed
+echo "Checking for and if needed installing steamcmd"
+
 IS_STEAM_HERE=$(command -v steamcmd >/dev/null 2>&1 || { echo >&2 "no"; })
 if [ "$IS_STEAM_HERE" = "no" ]; then sudo apt install steamcmd -y; fi
 
 #install apache2 if needed
+echo "Checking for and if needed installing apache2"
+
 if [ ! -f /etc/systemd/system/apache2.service ]; then 
   sudo apt install apache2 -y
   sudo systemctl enable apache2
@@ -29,7 +33,7 @@ fi
 #Check if the Ramdisk is NOT Present
 #Typically this will run after the server reboots since ramdisk is a temporary filesystem in ram.
 if [ ! -d $GAME_RD_LOC ]; then
-
+  echo "ramdrive no present -> Creating..."
   #If ramdisk is not present - create the dir and mount as ramdrive.
   sudo mkdir -p $GAME_RD_LOC
   sudo mount -t tmpfs -o size=12288m satisfactory ${GAME_RD_LOC}
@@ -37,43 +41,58 @@ if [ ! -d $GAME_RD_LOC ]; then
   #check persistent storage for save files
   if [ -d "$GAME_SAVES" ]; then
     #if saves are there, sync them to the ramdrive
+    echo "Directory for persistent saves found, attempting sync..."
     rsync -a $GAME_SAVES $GAME_RD_SAVES
     wait
     else
       #if saves are missing make the directory on the ramdrive for them.
+      echo "Directory for persistent saves not found, creating directory..."
       sudo mkdir -p $GAME_RD_SAVES
   fi
 
   #check persistant storage for game binaries
   if [ -d "$GAME_BINARIES" ]; then
     #if binaries are there, sync them to the ramdrive
+    echo "Directory for persistent backup of satisfactory binaries found, attempting sync..."
     rsync -a $GAME_BINARIES $GAME_RD_BINARIES
     wait
     else
       #if binaries are missing make the directory on the ramdrive for them.
+      echo "Directory for persistent backup of satisfactory binaries not found, creating directory..."
       sudo mkdir -p $GAME_RD_BINARIES
   fi
 
   #Verify Symlink for Save File Redirection is setup
   #Remember satisfactory runs as steam:steam
   #Deal with Backup copies & backup current.
-  if [ -d "$EPIC_LOC/Epic.old" ]; then sudo rm -rf $EPIC_LOC/Epic.old; fi
-  if [ -d "$EPIC_LOC/Epic" ]; then sudo mv $EPIC_LOC/Epic $EPIC_LOC/Epic.old; fi
+  if [ -d "$EPIC_LOC/Epic.old" ]; then 
+    echo "Found old symlink, removing"
+    sudo rm -rf $EPIC_LOC/Epic.old
+  fi
+  
+  if [ -d "$EPIC_LOC/Epic" ]; then 
+    echo "Renaming/Moving current EPIC folder/symlink"
+    sudo mv $EPIC_LOC/Epic $EPIC_LOC/Epic.old
+  fi
 
   #Recreate Symlink
+  echo "Create new EPIC symlink to ensure saves write to Ramdrive"
   sudo ln -s $GAME_RD_SAVES $EPIC_LOC/Epic
 
   #Now that all the framework is in place - run steamcmd to force an update and/or install satisfactory.
+  echo "Run steamcmd to install/update satisfactory"
   sudo /usr/games/steamcmd +force_install_dir ${GAME_RAMDRIVE_BINARIES} +login anonymous +app_update 1690800 validate +quit
 
   #make sure service file is installed & loaded
   if [ ! -f /etc/systemd/system/satisfactory.service ]; then
+    echo "satisfactory service file not found, installing and enabling service"
     sudo cp $SCRIPT_DIR/satisfactory.service /etc/systemd/system/
     sudo systemctl daemon-reload
     sudo systemctl enable satisfactory
   fi
 
   #start the service
+  echo "starting satisfactory service"
   sudo systemctl start satisfactory
 
 #The following will run everytime this script runs, but the RAMDRIVE is already setup & mounted.
@@ -81,14 +100,17 @@ if [ ! -d $GAME_RD_LOC ]; then
 #saves/binaries somewhere persistent.
 else
   #checks if folder for persistent saves exists, and if needed creates it.
+  echo "checking for, and if needed creating folder for persistent saves."
   if [ ! -d $GAME_SAVES ]; then sudo mkdir -p $GAME_SAVES; fi
 
   #copies any and all saves currently found in the Ramdrive, to the persistent storage.
   #this OVERWRITES anything in persistent storage.
+  echo "copy current saves to persistent storage"
   sudo rsync -a --delete $GAME_RD_SAVES $GAME_SAVES
 
   #copies individual save files to apache root - make available to users to download and use in tools
   #These are small
+  echo "copy current persistent saves files to apache2 www root"
   sudo rsync -r ${GAME_SAVES}/FactoryGame/Saved/SaveGames/server/ $WWW_ROOT
 
   #checks if folder for persistent backups of game binaries exists, and if needed creates it.
@@ -96,6 +118,7 @@ else
 
   #copies any and all binaries found in the ramdrive, to the persistent storage.
   #this OVERWRITES ANYTHING in persistent storage.
+  echo "copy current binaries to persistent storage"
   sudo rsync -a --delete $GAME_RD_BINARIES $GAME_BINARIES
   wait
 fi
