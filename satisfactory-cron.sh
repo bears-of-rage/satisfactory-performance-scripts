@@ -1,3 +1,6 @@
+#Get Directory of this script
+SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+
 #Satisfactory Game Default/Persistent Location
 GAME_LOC="/games/satisfactory"
 GAME_SAVES="${GAME_LOC}/saves"
@@ -13,9 +16,6 @@ WWW_ROOT="/var/www/html/"
 
 #steamcmd status
 IS_STEAM_HERE=$(command -v steamcmd >/dev/null 2>&1 || { echo >&2 "no"; })
-
-echo $WWW_ROOT
-echo $IS_STEAM_HERE
 
 #Check if steamcmd is installed
 if [ "$IS_STEAM_HERE" = "no" ]; then
@@ -50,7 +50,17 @@ if [ ! -d $GAME_RD_LOC ]; then
   fi
 
   #Now that the framework is in place - run steamcmd to force an update and/or install satisfactory.
-  sudo /usr/games/steamcmd +force_install_dir ${GAME_BINARIES} +login anonymous +app_update 1690800 validate +quit
+  sudo /usr/games/steamcmd +force_install_dir ${GAME_RAMDRIVE_BINARIES} +login anonymous +app_update 1690800 validate +quit
+
+  #make sure service file is installed & loaded
+  if [ ! -f /etc/systemd/system/satisfactory.service ]; then
+    sudo cp $SCRIPT_DIR/satisfactory.service /etc/systemd/system/
+    sudo systemctl daemon-reload
+    sudo systemctl enable satisfactory
+  fi
+
+  #start the service
+  sudo systemctl start satisfactory
 fi
 
 #else
