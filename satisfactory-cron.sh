@@ -3,6 +3,11 @@ GAME_LOC="/games/satisfactory"
 GAME_SAVES="${GAME_LOC}/saves"
 GAME_BINARIES="${GAME_LOC}/binaries"
 
+echo $GAME_LOC
+echo $GAME_SAVES
+echo $GAME_BINARIES
+
+
 #Satisfactory Volatile/RamDrive Location(s)
 GAME_RD_LOC="/tmp/satisfactory-ramdrive"
 GAME_RAMDRIVE_SAVES="${GAME_RD_LOC}/satisfactory-saves"
