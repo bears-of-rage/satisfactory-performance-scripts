@@ -1,35 +1,35 @@
-GAME-LOC="/games/satisfactory"
-GAME-RD-LOC="/tmp/satisfactory-ramdrive"
-GAME-RAMDRIVE-SAVES="${GAME-RD-LOC}/satisfactory-saves"
-GAME-RAMDRIVE-BINARIES="${GAME-RD-LOC}/satisfactory"
-WWW-ROOT="/var/www/html/"
+GAME_LOC="/games/satisfactory"
+GAME_RD_LOC="/tmp/satisfactory-ramdrive"
+GAME_RAMDRIVE_SAVES="${GAME_RD_LOC}/satisfactory-saves"
+GAME_RAMDRIVE_BINARIES="${GAME_RD_LOC}/satisfactory"
+WWW_ROOT="/var/www/html/"
 
-if [! -d '$GAME-RD-LOC' ]; then
-  sudo mkdir -p '$GAME-RD-LOC'
-  sudo mount -t tmpfs -o size=12288m satisfactory ${GAME-RD-LOC}
-  rsync -a ${GAME-LOC}/satisfactory-saves ${GAME-RAMDRIVE-SAVES}
+if [! -d '$GAME_RD_LOC' ]; then
+  sudo mkdir -p '$GAME_RD_LOC'
+  sudo mount -t tmpfs -o size=12288m satisfactory ${GAME_RD_LOC}
+  rsync -a ${GAME_LOC}/satisfactory-saves ${GAME_RAMDRIVE_SAVES}
   wait
-  sudo chown -R steam:steam ${GAME-RAMDRIVE-SAVES}
+  sudo chown -R steam:steam ${GAME_RAMDRIVE_SAVES}
   wait
-  rsync -a ${GAME-LOC}/satisfactory ${GAME-RD-LOC}
+  rsync -a ${GAME_LOC}/satisfactory ${GAME_RD_LOC}
   wait
-  sudo chown -R steam:steam ${GAME-RAMDRIVE-BINARIES}
+  sudo chown -R steam:steam ${GAME_RAMDRIVE_BINARIES}
   wait
-  sudo /usr/games/steamcmd +force_install_dir ${GAME-RD-LOC} +login anonymous +app_update 1690800 validate +quit
+  sudo /usr/games/steamcmd +force_install_dir ${GAME_RD_LOC} +login anonymous +app_update 1690800 validate +quit
   wait
   sudo systemctl start satisfactory
   wait
   sleep 5
 else
-  if [! -d ${GAME-LOC}/satisfactory-saves]; then
-    sudo mkdir -p ${GAME-LOC}/satisfactory-saves
+  if [! -d ${GAME_LOC}/satisfactory-saves]; then
+    sudo mkdir -p ${GAME_LOC}/satisfactory-saves
   fi
-  sudo rsync -a --delete ${GAME-RAMDRIVE-SAVES} ${GAME-LOC}/satisfactory-saves/
-  sudo rsync -r ${GAME-LOC}/satisfactory-saves/Epic/FactoryGame/Saved/SaveGames/server/ ${WWW-ROOT}
+  sudo rsync -a --delete ${GAME_RAMDRIVE_SAVES} ${GAME_LOC}/satisfactory-saves/
+  sudo rsync -r ${GAME_LOC}/satisfactory-saves/Epic/FactoryGame/Saved/SaveGames/server/ ${WWW_ROOT}
 
-  if [ ! -d ${GAME-RD-LOC}/satisfactory ]; then
-    sudo mkdir -p ${GAME-RD-LOC}/satisfactory
-    sudo rsync -a --delete ${GAME-RAMDRIVE-BINARIES} ${GAME-RD-LOC}/satisfactory/
+  if [ ! -d ${GAME_RD_LOC}/satisfactory ]; then
+    sudo mkdir -p ${GAME_RD_LOC}/satisfactory
+    sudo rsync -a --delete ${GAME_RAMDRIVE_BINARIES} ${GAME_RD_LOC}/satisfactory/
     wait
    fi
 fi
