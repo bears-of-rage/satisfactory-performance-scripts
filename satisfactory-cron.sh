@@ -1,6 +1,6 @@
 #Get Directory of this script
 SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
-EPIC_LOC="/home/steam/.config"
+EPIC_SAVE_LOC="/home/steam/.config/Epic/FactoryGame/Saved/SaveGames/"
 
 #Satisfactory Game Default/Persistent Location
 GAME_LOC="/games/satisfactory"
@@ -65,22 +65,29 @@ if [ ! -d $GAME_RD_LOC ]; then
   #Verify Symlink for Save File Redirection is setup
   #Remember satisfactory runs as steam:steam
   #Deal with Backup copies & backup current.
-  if [ -d "$EPIC_LOC/Epic.old" ]; then 
-    echo "Found old symlink, removing"
-    sudo rm -rf $EPIC_LOC/Epic.old
+  if [ ! -d $EPIC_SAVE_LOC ]; then
+    ln -s $GAME_RD_SAVES $EPIC_SAVE_LOC/server
+  else
+    if [ -d $EPIC_SAVE_LOC/server-old ]; then rm -rf $EPIC_SAVE_LOC/server-old; fi
+    mv $EPIC_SAVE_LOC/server $EPIC_SAVE_LOC/server-old
+    ln -s $GAME_RD_SAVES $EPIC_SAVE_LOC/server
   fi
+  #if [ -d "$EPIC_LOC/Epic.old" ]; then 
+  #  echo "Found old symlink, removing"
+  #  sudo rm -rf $EPIC_LOC/Epic.old
+  #fi
   
-  if [ -d "$EPIC_LOC/Epic" ]; then 
-    echo "Renaming/Moving current EPIC folder/symlink"
-    sudo mv $EPIC_LOC/Epic $EPIC_LOC/Epic.old
-  fi
+  #if [ -d "$EPIC_LOC/Epic" ]; then 
+  #  echo "Renaming/Moving current EPIC folder/symlink"
+  #  sudo mv $EPIC_LOC/Epic $EPIC_LOC/Epic.old
+  #fi
 
   #Recreate Symlink
   #if satisfactory has not run before parent directory may not exist, create it.
-  if [ ! -d $EPIC_LOC ]; then mkdir -p $EPIC_LOC; fi
+  #if [ ! -d $EPIC_LOC ]; then mkdir -p $EPIC_LOC; fi
 
-  echo "Create new EPIC symlink to ensure saves write to Ramdrive"
-  sudo ln -s $GAME_RD_SAVES $EPIC_LOC/Epic
+  #echo "Create new EPIC symlink to ensure saves write to Ramdrive"
+  #sudo ln -s $GAME_RD_SAVES $EPIC_LOC/Epic
 
   #Now that all the framework is in place - run steamcmd to force an update and/or install satisfactory.
   echo "Run steamcmd to install/update satisfactory"
