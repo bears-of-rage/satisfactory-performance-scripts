@@ -66,10 +66,11 @@ if [ ! -d $GAME_RD_LOC ]; then
   #Remember satisfactory runs as steam:steam
   #Deal with Backup copies & backup current.
   if [ ! -d $EPIC_SAVE_LOC ]; then
+    mkdir -p $EPIC_SAVE_LOC
     ln -s $GAME_RD_SAVES $EPIC_SAVE_LOC/server
   else
     if [ -d $EPIC_SAVE_LOC/server-old ]; then rm -rf $EPIC_SAVE_LOC/server-old; fi
-    mv $EPIC_SAVE_LOC/server $EPIC_SAVE_LOC/server-old
+    if [ -d $EPIC_SAVE_LOC/server ]; then mv $EPIC_SAVE_LOC/server $EPIC_SAVE_LOC/server-old; fi
     ln -s $GAME_RD_SAVES $EPIC_SAVE_LOC/server
   fi
 
