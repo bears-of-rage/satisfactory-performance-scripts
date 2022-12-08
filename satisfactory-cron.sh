@@ -91,7 +91,7 @@ if [ ! -d $GAME_RD_LOC ]; then
 
   #Now that all the framework is in place - run steamcmd to force an update and/or install satisfactory.
   echo "Run steamcmd to install/update satisfactory"
-  sudo /usr/games/steamcmd +force_install_dir ${GAME_RAMDRIVE_BINARIES} +login anonymous +app_update 1690800 validate +quit
+  sudo /usr/games/steamcmd +force_install_dir ${GAME_RD_BINARIES} +login anonymous +app_update 1690800 validate +quit
 
   #make sure service file is installed & loaded
   if [ ! -f /etc/systemd/system/satisfactory.service ]; then
