@@ -1,6 +1,6 @@
 #Get Directory of this script
 SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
-EPIC_SAVE_LOC="/home/steam/.config/Epic/FactoryGame/Saved/SaveGames/"
+EPIC_SAVE_LOC="/home/steam/.config/Epic/FactoryGame/Saved/SaveGames"
 
 #Satisfactory Game Default/Persistent Location
 GAME_LOC="/games/satisfactory"
@@ -33,7 +33,7 @@ fi
 #Check if the Ramdisk is NOT Present
 #Typically this will run after the server reboots since ramdisk is a temporary filesystem in ram.
 if [ ! -d $GAME_RD_LOC ]; then
-  echo "ramdrive no present -> Creating..."
+  echo "ramdrive not present -> Creating..."
   #If ramdisk is not present - create the dir and mount as ramdrive.
   sudo mkdir -p $GAME_RD_LOC
   sudo mount -t tmpfs -o size=12288m satisfactory ${GAME_RD_LOC}
@@ -72,22 +72,6 @@ if [ ! -d $GAME_RD_LOC ]; then
     mv $EPIC_SAVE_LOC/server $EPIC_SAVE_LOC/server-old
     ln -s $GAME_RD_SAVES $EPIC_SAVE_LOC/server
   fi
-  #if [ -d "$EPIC_LOC/Epic.old" ]; then 
-  #  echo "Found old symlink, removing"
-  #  sudo rm -rf $EPIC_LOC/Epic.old
-  #fi
-  
-  #if [ -d "$EPIC_LOC/Epic" ]; then 
-  #  echo "Renaming/Moving current EPIC folder/symlink"
-  #  sudo mv $EPIC_LOC/Epic $EPIC_LOC/Epic.old
-  #fi
-
-  #Recreate Symlink
-  #if satisfactory has not run before parent directory may not exist, create it.
-  #if [ ! -d $EPIC_LOC ]; then mkdir -p $EPIC_LOC; fi
-
-  #echo "Create new EPIC symlink to ensure saves write to Ramdrive"
-  #sudo ln -s $GAME_RD_SAVES $EPIC_LOC/Epic
 
   #Now that all the framework is in place - run steamcmd to force an update and/or install satisfactory.
   echo "Run steamcmd to install/update satisfactory"
