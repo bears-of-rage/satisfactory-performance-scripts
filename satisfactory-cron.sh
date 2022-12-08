@@ -21,7 +21,7 @@ if [ ! -d $GAME_RD_LOC ]; then
   wait
   sleep 5
 else
-  if [ ! -d ${GAME_LOC}/satisfactory-saves]; then
+  if [ ! -d ${GAME_LOC}/satisfactory-saves ]; then
     sudo mkdir -p ${GAME_LOC}/satisfactory-saves
   fi
   sudo rsync -a --delete ${GAME_RAMDRIVE_SAVES} ${GAME_LOC}/satisfactory-saves/
