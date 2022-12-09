@@ -42,7 +42,7 @@ if [ ! -d $GAME_RD_LOC ]; then
   if [ -d "$GAME_SAVES" ]; then
     #if saves are there, sync them to the ramdrive
     echo "Directory for persistent saves found, attempting sync..."
-    rsync -a $GAME_SAVES $GAME_RD_SAVES
+    rsync -a $GAME_SAVES $GAME_RD_LOC
     wait
     else
       #if saves are missing make the directory on the ramdrive for them.
@@ -55,7 +55,7 @@ if [ ! -d $GAME_RD_LOC ]; then
   if [ -d "$GAME_BINARIES" ]; then
     #if binaries are there, sync them to the ramdrive
     echo "Directory for persistent backup of satisfactory binaries found, attempting sync..."
-    rsync -a $GAME_BINARIES $GAME_RD_BINARIES
+    rsync -a $GAME_BINARIES $GAME_RD_LOC
     wait
     else
       #if binaries are missing make the directory on the ramdrive for them.
@@ -108,7 +108,7 @@ else
   #copies any and all saves currently found in the Ramdrive, to the persistent storage.
   #this OVERWRITES anything in persistent storage.
   echo "copy current saves to persistent storage"
-  sudo rsync -a --delete $GAME_RD_SAVES $GAME_SAVES
+  sudo rsync -a --delete $GAME_RD_SAVES $GAME_LOC
 
   #copies individual save files to apache root - make available to users to download and use in tools
   #These are small
@@ -124,6 +124,6 @@ else
   #copies any and all binaries found in the ramdrive, to the persistent storage.
   #this OVERWRITES ANYTHING in persistent storage.
   echo "copy current binaries to persistent storage"
-  sudo rsync -a --delete $GAME_RD_BINARIES $GAME_BINARIES
+  sudo rsync -a --delete $GAME_RD_BINARIES $GAME_LOC
   wait
 fi
