@@ -48,6 +48,7 @@ if [ ! -d $GAME_RD_LOC ]; then
       #if saves are missing make the directory on the ramdrive for them.
       echo "Directory for persistent saves not found, creating directory..."
       sudo mkdir -p $GAME_RD_SAVES
+      sudo chown steam:steam $GAME_RD_SAVES
   fi
 
   #check persistant storage for game binaries
@@ -61,6 +62,9 @@ if [ ! -d $GAME_RD_LOC ]; then
       echo "Directory for persistent backup of satisfactory binaries not found, creating directory..."
       sudo mkdir -p $GAME_RD_BINARIES
   fi
+  
+  #Make sure permissions on RAMDRIVE are good
+  sudo chown -R steam:steam $GAME_RD_LOC
 
   #Verify Symlink for Save File Redirection is setup
   #Remember satisfactory runs as steam:steam
@@ -96,7 +100,10 @@ if [ ! -d $GAME_RD_LOC ]; then
 else
   #checks if folder for persistent saves exists, and if needed creates it.
   echo "checking for, and if needed creating folder for persistent saves."
-  if [ ! -d $GAME_SAVES ]; then sudo mkdir -p $GAME_SAVES; fi
+  if [ ! -d $GAME_SAVES ]; then 
+    sudo mkdir -p $GAME_SAVES
+    sudo chown -R steam:steam $GAME_SAVES
+  fi
 
   #copies any and all saves currently found in the Ramdrive, to the persistent storage.
   #this OVERWRITES anything in persistent storage.
@@ -106,10 +113,13 @@ else
   #copies individual save files to apache root - make available to users to download and use in tools
   #These are small
   echo "copy current persistent saves files to apache2 www root"
-  sudo rsync -r ${GAME_SAVES}/FactoryGame/Saved/SaveGames/server/ $WWW_ROOT
+  sudo rsync -r $GAME_SAVES $WWW_ROOT
 
   #checks if folder for persistent backups of game binaries exists, and if needed creates it.
-  if [ ! -d $GAME_BINARIES ]; then sudo mkdir -p $GAME_BINARIES; fi
+  if [ ! -d $GAME_BINARIES ]; then
+    sudo mkdir -p $GAME_BINARIES
+    sudo chown -R steam:steam $GAME_BINARIES
+  fi
 
   #copies any and all binaries found in the ramdrive, to the persistent storage.
   #this OVERWRITES ANYTHING in persistent storage.
