@@ -19,6 +19,8 @@ WWW_ROOT="/var/www/html/"
 echo "Checking for and if needed installing steamcmd"
 
 if ! command -v steamcmd &> /dev/null; then
+  sudo apt update -y
+  sudo apt install software-properties-common -y
   sudo apt add-apt-repository multiverse -y
   sudo dpkg --add-architecture i386
   sudo apt update -y
