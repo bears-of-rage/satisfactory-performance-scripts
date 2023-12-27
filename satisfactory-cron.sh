@@ -18,8 +18,7 @@ WWW_ROOT="/var/www/html/"
 #install steamcmd if needed
 echo "Checking for and if needed installing steamcmd"
 
-IS_STEAM_HERE=$(command -v steamcmd >/dev/null 2>&1 || { echo >&2 "no"; })
-if [ "$IS_STEAM_HERE" = "no" ]; then 
+if ! command -v steamcmd &> /dev/null; then
   sudo apt add-apt-repository multiverse -y
   sudo dpkg --add-architecture i386
   sudo apt update -y
