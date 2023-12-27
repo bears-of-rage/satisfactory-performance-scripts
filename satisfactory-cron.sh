@@ -19,7 +19,12 @@ WWW_ROOT="/var/www/html/"
 echo "Checking for and if needed installing steamcmd"
 
 IS_STEAM_HERE=$(command -v steamcmd >/dev/null 2>&1 || { echo >&2 "no"; })
-if [ "$IS_STEAM_HERE" = "no" ]; then sudo apt install steamcmd -y; fi
+if [ "$IS_STEAM_HERE" = "no" ]; then 
+  sudo apt add-apt-repository multiverse -y
+  sudo dpkg --add-architecture i386
+  sudo apt update -y
+  sudo apt install steamcmd -y
+fi
 
 #install apache2 if needed
 echo "Checking for and if needed installing apache2"
