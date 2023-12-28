@@ -127,7 +127,7 @@ else
   #copies individual save files to apache root - make available to users to download and use in tools
   #These are small
   echo "copy current persistent saves files to apache2 www root"
-  sudo rsync -r "$GAME_SAVES/* $WWW_ROOT
+  sudo rsync -r "$GAME_SAVES/*" $WWW_ROOT
 
   #checks if folder for persistent backups of game binaries exists, and if needed creates it.
   if [ ! -d $GAME_BINARIES ]; then
