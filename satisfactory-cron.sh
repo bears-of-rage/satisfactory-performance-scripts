@@ -1,3 +1,9 @@
+#Prerequisites
+#You need to run this stuff first manually
+#
+#  sudo adduser -p <password>
+#
+#
 #Get Directory of this script
 SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 EPIC_SAVE_LOC="/home/steam/.config/Epic/FactoryGame/Saved/SaveGames"
@@ -24,6 +30,8 @@ if ! command -v steamcmd &> /dev/null; then
   sudo add-apt-repository multiverse
   sudo dpkg --add-architecture i386
   sudo apt update -y
+  sudo echo steam steam/license note '' | sudo debconf-set-selections
+  sudo echo steam steam/question select "I AGREE" | sudo debconf-set-selections
   sudo apt install steamcmd -y
 fi
 
@@ -119,7 +127,7 @@ else
   #copies individual save files to apache root - make available to users to download and use in tools
   #These are small
   echo "copy current persistent saves files to apache2 www root"
-  sudo rsync -r $GAME_SAVES $WWW_ROOT/saves
+  sudo rsync -r "$GAME_SAVES/* $WWW_ROOT
 
   #checks if folder for persistent backups of game binaries exists, and if needed creates it.
   if [ ! -d $GAME_BINARIES ]; then
