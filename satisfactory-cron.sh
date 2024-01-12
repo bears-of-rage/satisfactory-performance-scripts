@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #Prerequisites
 #You need to run this stuff first manually
 #
