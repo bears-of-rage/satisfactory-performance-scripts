@@ -19,7 +19,16 @@ GAME_RD_SAVES="${GAME_RD_LOC}/saves"
 GAME_RD_BINARIES="${GAME_RD_LOC}/binaries"
 
 #Apache2 website root dir
-WWW_ROOT="/var/www/html/"
+WWW_ROOT="/var/www/html"
+WWW_ARCHIVE="$WWW_ROOT/archive"
+WWW_MANUAL="$WWW_ROOT/manual-saves"
+WWW_HISTORY="$WWW_ROOT/history"
+WWW_LEGEND="$WWW_ROOT/00_legend.txt"
+WWW_LEGENDCONTENT="
+Archive: For manually moving random saves into as needed.
+Manual-Saves: Saved games with 'manual' in the name are copied here.
+History: Everytime the cronjob runs, the current saves in root are compressed into a zip and dropped in here.
+"
 
 #install steamcmd if needed
 echo "Checking for and if needed installing steamcmd"
@@ -122,12 +131,36 @@ else
   #copies any and all saves currently found in the Ramdrive, to the persistent storage.
   #this OVERWRITES anything in persistent storage.
   echo "copy current saves to persistent storage"
+
+  if
   sudo rsync -a --delete $GAME_RD_SAVES $GAME_LOC
 
   #copies individual save files to apache root - make available to users to download and use in tools
   #These are small
-  echo "copy current persistent saves files to apache2 www root"
-  sudo rsync -r $GAME_SAVES/* $WWW_ROOT
+  echo "verify folder/file structure"
+
+  if [ ! -d "$WWW_ARCHIVE" ]; then
+    sudo mkdir -p "$WWW_ARCHIVE"
+  fi
+
+  if [ ! -d "$WWW_MANUAL" ]; then
+    sudo mkdir -p "$WWW_MANUAL"
+  fi
+
+  if [ ! "$WWW_LEGEND" ]; then
+    sudo echo -e "$WWW_LEGENDCONTENT" > "$WWWLEGEND"
+  fi
+
+  echo "move current saves into history"
+  NEW_HISTORY_PATH="$WWW_HISTORY"/"$(date +"%Y%m%d_%H%M%S")"
+  sudo mkdir -p "$NEW_HISTORY_PATH"
+  find "$WWW_HISTORY" -maxdepth 1 -type f ! -name '00*' -exec mv {} "$NEW_HISTORY_PATH" \;
+
+  echo "copy current saves with 'manual' in the name."
+  find "$GAME_SAVES" -maxdepth 1 -type f -name '*manual*' -exec cp -p -f {} "$WWW_MANUAL" \;
+
+  echo "copy current auto-saves to the WWW_ROOT directory""
+  find "$GAME_SAVES" -maxdepth 1 -type f -name '*autosave*' -exec cp -p -f {} "$WWW_ROOT" \;
 
   #checks if folder for persistent backups of game binaries exists, and if needed creates it.
   if [ ! -d $GAME_BINARIES ]; then
