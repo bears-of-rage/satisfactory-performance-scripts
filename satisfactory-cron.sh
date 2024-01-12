@@ -154,7 +154,7 @@ else
   echo "move current saves into history"
   NEW_HISTORY_PATH="$WWW_HISTORY"/"$(date +"%Y%m%d_%H%M%S")"
   sudo mkdir -p "$NEW_HISTORY_PATH"
-  find "$WWW_HISTORY" -maxdepth 1 -type f ! -name '00*' -exec sudo mv {} "$NEW_HISTORY_PATH" \;
+  find "$WWW_ROOT" -maxdepth 1 -type f ! -name '00*' -exec sudo mv {} "$NEW_HISTORY_PATH" \;
 
   echo "copy current saves with 'manual' in the name."
   find "$GAME_SAVES" -maxdepth 1 -type f -name '*manual*' -exec sudo cp -p -f {} "$WWW_MANUAL" \;
