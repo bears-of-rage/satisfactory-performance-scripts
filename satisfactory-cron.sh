@@ -136,7 +136,22 @@ else
   sudo rsync -a --delete $GAME_RD_SAVES $GAME_LOC
 
   #copies individual save files to apache root - make available to users to download and use in tools
-  #These are small
+  #These are small but add up over time.
+  #the www directory has been remounted on its own disk so it won't crash the server.
+  
+  #check the www capacity and if over 75% post to discord
+  CURRENT_USAGE_PERCENT=$(df -h "/ssd/www" | awk 'NR==2{print $5}' | tr -d '%')
+  USAGE_THRESHOLD=75
+  WARNING_MESSAGE="WARNING:  Satisfactory Server /SSD mount is at "$CURRENT_USAGE_PERCENT"% Used"
+  
+  if [ "$CURRENT_USAGE_PERCENT" -gt "$USAGE_THRESHOLD" ]; then
+    curl -X POST \
+     -H "Content-Type: application/json" \
+     -d "{\"content\":\"$WARNING_MESSAGE\"}" \
+     "$DISC_WH"
+  fi
+
+  #now lets validate files and copy crap
   echo "verify folder/file structure"
 
   if [ ! -d "$WWW_ARCHIVE" ]; then
