@@ -161,7 +161,7 @@ else
   echo "copy current saves with 'manual' in the name."
   find "$GAME_SAVES" -maxdepth 1 -type f -name '*manual*' -exec cp -p -f {} "$WWW_MANUAL" \;
 
-  echo "copy current auto-saves to the WWW_ROOT directory""
+  echo "copy current auto-saves to the WWW_ROOT directory"
   find "$GAME_SAVES" -maxdepth 1 -type f -name '*autosave*' -exec cp -p -f {} "$WWW_ROOT" \;
 
   #checks if folder for persistent backups of game binaries exists, and if needed creates it.
