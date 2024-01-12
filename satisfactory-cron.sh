@@ -133,8 +133,6 @@ else
   #copies any and all saves currently found in the Ramdrive, to the persistent storage.
   #this OVERWRITES anything in persistent storage.
   echo "copy current saves to persistent storage"
-
-  if
   sudo rsync -a --delete $GAME_RD_SAVES $GAME_LOC
 
   #copies individual save files to apache root - make available to users to download and use in tools
@@ -175,4 +173,5 @@ else
   echo "copy current binaries to persistent storage"
   sudo rsync -a --delete $GAME_RD_BINARIES $GAME_LOC
   wait
+  
 fi
