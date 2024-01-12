@@ -154,13 +154,13 @@ else
   echo "move current saves into history"
   NEW_HISTORY_PATH="$WWW_HISTORY"/"$(date +"%Y%m%d_%H%M%S")"
   sudo mkdir -p "$NEW_HISTORY_PATH"
-  find "$WWW_HISTORY" -maxdepth 1 -type f ! -name '00*' -exec mv {} "$NEW_HISTORY_PATH" \;
+  find "$WWW_HISTORY" -maxdepth 1 -type f ! -name '00*' -exec sudo mv {} "$NEW_HISTORY_PATH" \;
 
   echo "copy current saves with 'manual' in the name."
-  find "$GAME_SAVES" -maxdepth 1 -type f -name '*manual*' -exec cp -p -f {} "$WWW_MANUAL" \;
+  find "$GAME_SAVES" -maxdepth 1 -type f -name '*manual*' -exec sudo cp -p -f {} "$WWW_MANUAL" \;
 
   echo "copy current auto-saves to the WWW_ROOT directory"
-  find "$GAME_SAVES" -maxdepth 1 -type f -name '*autosave*' -exec cp -p -f {} "$WWW_ROOT" \;
+  find "$GAME_SAVES" -maxdepth 1 -type f -name '*autosave*' -exec sudo cp -p -f {} "$WWW_ROOT" \;
 
   #checks if folder for persistent backups of game binaries exists, and if needed creates it.
   if [ ! -d $GAME_BINARIES ]; then
@@ -173,5 +173,5 @@ else
   echo "copy current binaries to persistent storage"
   sudo rsync -a --delete $GAME_RD_BINARIES $GAME_LOC
   wait
-  
+
 fi
