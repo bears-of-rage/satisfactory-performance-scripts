@@ -139,6 +139,10 @@ else
   #These are small but add up over time.
   #the www directory has been remounted on its own disk so it won't crash the server.
   
+  #cleanup the history directory before we check the capacity
+  #mtime +2 means older than 2 days
+  find "$WWW_HISTORY" -type d -mtime +2 -exec rm -r {}\;
+
   #check the www capacity and if over 75% post to discord
   CURRENT_USAGE_PERCENT=$(df -h "/ssd/www" | awk 'NR==2{print $5}' | tr -d '%')
   USAGE_THRESHOLD=75
@@ -150,6 +154,7 @@ else
      -d "{\"content\":\"$WARNING_MESSAGE\"}" \
      "$DISC_WH"
   fi
+
 
   #now lets validate files and copy crap
   echo "verify folder/file structure"
