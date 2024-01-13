@@ -141,7 +141,7 @@ else
   
   #cleanup the history directory before we check the capacity
   #mtime +2 means older than 2 days
-  find "$WWW_HISTORY" -type d -mtime +2 -exec rm -r {}\;
+  find "$WWW_HISTORY" -type d -mtime +2 -exec rm -r {} \;
 
   #check the www capacity and if over 75% post to discord
   CURRENT_USAGE_PERCENT=$(df -h "/ssd/www" | awk 'NR==2{print $5}' | tr -d '%')
