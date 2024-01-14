@@ -5,7 +5,7 @@ After=syslog.target network.target nss-lookup.target network-online.target
 
 [Service]
 Environment="LD_LIBRARY_PATH=./linux64"
-ExecStart=/tmp/satisfactory-ramdrive/binaries/FactoryServer.sh -multihome=192.168.0.22 -ServerQUeryPort=16000
+ExecStart=/tmp/satisfactory-ramdrive/binaries/FactoryServer.sh -multihome=10.11.1.21 -ServerQUeryPort=15777 -DisableSeasonalEvents
 User=steam
 Group=steam
 StandardOutput=journal

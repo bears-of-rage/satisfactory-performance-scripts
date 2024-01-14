@@ -1,11 +1,9 @@
 #!/bin/bash
+#
+# Disable Seasonal Events has been added to the startup parameters in the service file.
+# Therefore no need to add to the Config file.
+#
 
-#Prerequisites
-#You need to run this stuff first manually
-#
-#  sudo adduser -p <password>
-#
-#
 #Get Directory of this script
 SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 EPIC_SAVE_LOC="/home/steam/.config/Epic/FactoryGame/Saved/SaveGames"
@@ -25,12 +23,16 @@ WWW_ROOT="/var/www/html"
 WWW_ARCHIVE="$WWW_ROOT/archive"
 WWW_MANUAL="$WWW_ROOT/manual-saves"
 WWW_HISTORY="$WWW_ROOT/history"
-WWW_LEGEND="$WWW_ROOT/00_legend.txt"
-WWW_LEGENDCONTENT="
-Archive: For manually moving random saves into as needed.
-Manual-Saves: Saved games with 'manual' in the name are copied here.
-History: Everytime the cronjob runs, the current saves in root are compressed into a zip and dropped in here.
-"
+
+#Config Values
+ENGINE_INI="$GAME_RD_BINARIES/FactoryGame/Saved/Config/LinuxServer/Engine.ini"
+
+SAVE_ROTATION="[/Script/FactoryGame.FGSaveSession]
+mNumRotatingAutosaves=20"
+
+if ! grep -q "$SAVE_ROTATION" "$ENGINE_INI"; then
+  echo "$SAVE_ROTATION" >> "$ENGINE_INI"
+fi
 
 #install steamcmd if needed
 echo "Checking for and if needed installing steamcmd"
@@ -139,9 +141,17 @@ else
   #These are small but add up over time.
   #the www directory has been remounted on its own disk so it won't crash the server.
   
-  #cleanup the history directory before we check the capacity
-  #mtime +2 means older than 2 days
-  find "$WWW_HISTORY" -type d -mtime +2 -exec rm -r {} \;
+  HISTORY_SUBFOLDERS=("$WWW_HISTORY"/*)
+  MAX_SUBDIRS=25
+
+  if [ "${#HISTORY_SUBFOLDERS[@]}" -gt "$MAX_SUBDIRS" ]; then
+    SUBFOLDER_TO_DEL=($(ls -t "$WWW_HISTORY" | tail -n +"$((MAX_SUBDIRS + 1))"))
+
+    for subdir in "${SUBFOLDER_TO_DEL[@]}"; do
+      rm -rf "$WWW_HISTORY/$subdir"
+    done
+
+  fi
 
   #check the www capacity and if over 75% post to discord
   CURRENT_USAGE_PERCENT=$(df -h "/ssd/www" | awk 'NR==2{print $5}' | tr -d '%')
@@ -155,7 +165,6 @@ else
      "$DISC_WH"
   fi
 
-
   #now lets validate files and copy crap
   echo "verify folder/file structure"
 
@@ -165,10 +174,6 @@ else
 
   if [ ! -d "$WWW_MANUAL" ]; then
     sudo mkdir -p "$WWW_MANUAL"
-  fi
-
-  if [ ! "$WWW_LEGEND" ]; then
-    sudo echo -e "$WWW_LEGENDCONTENT" > "$WWWLEGEND"
   fi
 
   echo "move current saves into history"
