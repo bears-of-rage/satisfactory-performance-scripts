@@ -31,7 +31,10 @@ SAVE_ROTATION="[/Script/FactoryGame.FGSaveSession]
 mNumRotatingAutosaves=20"
 
 if ! grep -q "$SAVE_ROTATION" "$ENGINE_INI"; then
+  echo "didn't find the content in the engine file"
   echo "$SAVE_ROTATION" >> "$ENGINE_INI"
+else 
+  echo "engine file content exists"
 fi
 
 #install steamcmd if needed
