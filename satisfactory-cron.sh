@@ -25,13 +25,14 @@ WWW_MANUAL="$WWW_ROOT/manual-saves"
 WWW_HISTORY="$WWW_ROOT/history"
 
 #Config Values
-ENGINE_INI="$GAME_BINARIES/FactoryGame/Saved/Config/LinuxServer/Engine.ini"
+ENGINE_INI="$GAME_RD_BINARIES/FactoryGame/Saved/Config/LinuxServer/Engine.ini"
 
 SAVE_ROTATION="[/Script/FactoryGame.FGSaveSession]
 mNumRotatingAutosaves=20"
 
 if ! grep -q "$SAVE_ROTATION" "$ENGINE_INI"; then
   echo "didn't find the content in the engine file"
+  echo "" >> "$ENGINE_INI"
   echo "$SAVE_ROTATION" >> "$ENGINE_INI"
 else 
   echo "engine file content exists"
