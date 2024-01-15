@@ -30,7 +30,7 @@ ENGINE_INI="$GAME_RD_BINARIES/FactoryGame/Saved/Config/LinuxServer/Engine.ini"
 SAVE_ROTATION="[/Script/FactoryGame.FGSaveSession]
 mNumRotatingAutosaves=20"
 
-if ! grep -q "$SAVE_ROTATION" "$ENGINE_INI"; then
+if [ ! grep -q "$SAVE_ROTATION" "$ENGINE_INI" ]; then
   echo "didn't find the content in the engine file"
   sudo echo "" >> "$ENGINE_INI"
   sudo echo "$SAVE_ROTATION" >> "$ENGINE_INI"
