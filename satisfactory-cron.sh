@@ -25,18 +25,10 @@ WWW_MANUAL="$WWW_ROOT/manual-saves"
 WWW_HISTORY="$WWW_ROOT/history"
 
 #Config Values
-ENGINE_INI="$GAME_RD_BINARIES/FactoryGame/Saved/Config/LinuxServer/Engine.ini"
+ENGINE_INI="{$GAME_RD_BINARIES}/FactoryGame/Saved/Config/LinuxServer/Engine.ini"
+SAVE_ROT_LINE1="[/Script/FactoryGame.FGSaveSession]"
+SAVE_ROT_LINE2="mNumRotatingAutosaves=20"
 
-SAVE_ROTATION="[/Script/FactoryGame.FGSaveSession]
-mNumRotatingAutosaves=20"
-
-if [ ! grep -q "$SAVE_ROTATION" "$ENGINE_INI" ]; then
-  echo "didn't find the content in the engine file"
-  sudo echo "" >> "$ENGINE_INI"
-  sudo echo "$SAVE_ROTATION" >> "$ENGINE_INI"
-else 
-  echo "engine file content exists"
-fi
 
 #install steamcmd if needed
 echo "Checking for and if needed installing steamcmd"
@@ -119,6 +111,18 @@ if [ ! -d $GAME_RD_LOC ]; then
     sudo cp $SCRIPT_DIR/satisfactory.service /etc/systemd/system/
     sudo systemctl daemon-reload
     sudo systemctl enable satisfactory
+  fi
+
+  if [ -f $ENGINE_INI ]; then
+    if [ ! grep -q "$SAVE_ROT_LINE1" "$ENGINE_INI" ] && [ ! grep -q "$SAVE_ROT_LINE2" "$ENGINE_INI" ]; then
+      sudo echo "" >> "$ENGINE_INI"
+      sudo echo "$SAVE_ROT_LINE1" >> "$ENGINE_INI"
+      sudo echo "$SAVE_ROT_LINE2" >> "$ENGINE_INI"
+    elif [ grep -q "$SAVE_ROT_LINE1" "$ENGINE_INI" ] && [ ! grep -q "$SAVE_ROT_LINE2" "$ENGINE_INI" ]; then
+      sed -i "/$SAVE_ROT_LINE1/ a\\$SAVE_ROT_LINE2" "$ENGINE_INI"
+    elif [ grep -q "$SAVE_ROT_LINE2" "$ENGINE_INI" ] && [ ! grep -q "$SAVE_ROT_LINE1" "$ENGINE_INI" ]; then
+      sed -i "/$SAVE_ROT_LINE2/ i\\$SAVE_ROT_LINE1" "$ENGINE_INI"
+    fi
   fi
 
   #start the service
