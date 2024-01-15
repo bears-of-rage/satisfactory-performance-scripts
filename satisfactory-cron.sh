@@ -32,8 +32,8 @@ mNumRotatingAutosaves=20"
 
 if ! grep -q "$SAVE_ROTATION" "$ENGINE_INI"; then
   echo "didn't find the content in the engine file"
-  echo "" >> "$ENGINE_INI"
-  echo "$SAVE_ROTATION" >> "$ENGINE_INI"
+  sudo echo "" >> "$ENGINE_INI"
+  sudo echo "$SAVE_ROTATION" >> "$ENGINE_INI"
 else 
   echo "engine file content exists"
 fi
