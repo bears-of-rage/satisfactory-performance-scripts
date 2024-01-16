@@ -1,210 +1,164 @@
 #!/bin/bash
-#
-# Disable Seasonal Events has been added to the startup parameters in the service file.
-# Therefore no need to add to the Config file.
-#
 
-#Get Directory of this script
-SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
-EPIC_SAVE_LOC="/home/steam/.config/Epic/FactoryGame/Saved/SaveGames"
+# Functions
+source satisfactory-functions.sh
 
-#Satisfactory Game Default/Persistent Location
-GAME_LOC="/games/satisfactory"
-GAME_SAVES="${GAME_LOC}/saves"
-GAME_BINARIES="${GAME_LOC}/binaries"
+# Required
+working_dir=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+  json_data=$(cat "$working_dir/satisfactory-configs.json")
 
-#Satisfactory Volatile/RamDrive Location(s)
-GAME_RD_LOC="/tmp/satisfactory-ramdrive"
-GAME_RD_SAVES="${GAME_RD_LOC}/saves"
-GAME_RD_BINARIES="${GAME_RD_LOC}/binaries"
+# Values from JSON
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+              gameusr=$(echo "$json_data" | jq -r '.["satisfactory-configs"].sudo_user_account')
+              host_ip=$(echo "$json_data" | jq -r '.["satisfactory-configs"].host_server_local_ip')
+            game_port=$(echo "$json_data" | jq -r '.["satisfactory-configs"].satisfactory_query_port')
+     disable_seasonal=$(echo "$json_data" | jq -r '.["satisfactory-configs"].disable_seasonal_events_yesno')
+       autosave_count=$(echo "$json_data" | jq -r '.["satisfactory-configs"].number_of_autosaves')
+           steamappid=$(echo "$json_data" | jq -r '.["satisfactory-configs"].steamcmd_satisfactory_id')
+    original_save_dir=$(echo "$json_data" | jq -r '.["satisfactory-configs"].original_save_loc')
+     persist_game_dir=$(echo "$json_data" | jq -r '.["satisfactory-configs"].persistent_game_loc')
+         ram_game_dir=$(echo "$json_data" | jq -r '.["satisfactory-configs"].ramdrive_game_loc')
+       ram_drive_size=$(echo "$json_data" | jq -r '.["satisfactory-configs"].ramdrive_size_in_MB')
+    history_retention=$(echo "$json_data" | jq -r '.["satisfactory-configs"].history_retention')
+history_daily_archive=$(echo "$json_data" | jq -r '.["satisfactory-configs"].history_daily_consolidate_yesno')
+        manualkeyword=$(echo "$json_data" | jq -r '.["satisfactory-configs"].manual_save_keyword')
+      manual_save_dir=$(echo "$json_data" | jq -r '.["satisfactory-configs"].manual_save_dir_yesno')
+       discord_notify=$(echo "$json_data" | jq -r '.["satisfactory-configs"].discord_notify_yesno')
+      discord_webhook=$(echo "$json_data" | jq -r '.["satisfactory-configs"].discord_webhook')
+     notify_threshold=$(echo "$json_data" | jq -r '.["satisfactory-configs"].discord_notify_threshold')
+        cron_interval=$(echo "$json_data" | jq -r '.["satisfactory-configs"].crontab_interval_in_minutes')
+        svc_overwrite=$(echo "$json_data" | jq -r '.["satisfactory-configs"].overwrite_existing_service_yesno')
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
-#Apache2 website root dir
-WWW_ROOT="/var/www/html"
-WWW_ARCHIVE="$WWW_ROOT/archive"
-WWW_MANUAL="$WWW_ROOT/manual-saves"
-WWW_HISTORY="$WWW_ROOT/history"
+# Constants
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+                      usrhome="/home/$gameusr"
+             persist_game_bin="$persist_game_dir/binaries"
+            persist_game_saves="$persist_game_dir/saves"
+                 ram_game_bin="$ram_game_dir/binaries"
+                ram_game_saves="$ram_game_dir/saves"
+                   engine_ini="$ram_game_bin/FactoryGame/Saved/Config/LinuxServer/Engine.ini"
+  original_save_dir_full_path="$usrhome/$original_save_dir"
+                     www_root="/var/www/html"
+                  www_archive="$www_root/archive"
+                   www_manual="$www_root/manual"
+                  www_history="$www_root/history"
+               www_historycon="$www_root/consolidated_history"
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
-#Config Values
-ENGINE_INI="{$GAME_RD_BINARIES}/FactoryGame/Saved/Config/LinuxServer/Engine.ini"
-SAVE_ROT_LINE1="[/Script/FactoryGame.FGSaveSession]"
-SAVE_ROT_LINE2="mNumRotatingAutosaves=20"
+# Pre-Requisite Checks
+#  What user am I?
+#  Do I have sudo access?
+#  Am I scheduled to repeat?
+#  Do I need a sudo password?
 
+echo -e "\e[33mchecking if ramdrive is present...\e[0m"
 
-#install steamcmd if needed
-echo "Checking for and if needed installing steamcmd"
-
-if ! command -v steamcmd &> /dev/null; then
-  sudo apt update -y
-  sudo apt install software-properties-common -y
-  sudo add-apt-repository multiverse
-  sudo dpkg --add-architecture i386
-  sudo apt update -y
-  sudo echo steam steam/license note '' | sudo debconf-set-selections
-  sudo echo steam steam/question select "I AGREE" | sudo debconf-set-selections
-  sudo apt install steamcmd -y
-fi
-
-#install apache2 if needed
-echo "Checking for and if needed installing apache2"
-
-if [ ! -f /lib/systemd/system/apache2.service ]; then 
-  sudo apt install apache2 -y
-  sudo systemctl enable apache2
-  sudo systemctl start apache2
-fi
-
-#Check if the Ramdisk is NOT Present
-#Typically this will run after the server reboots since ramdisk is a temporary filesystem in ram.
-if [ ! -d $GAME_RD_LOC ]; then
-  echo "ramdrive not present -> Creating..."
-  #If ramdisk is not present - create the dir and mount as ramdrive.
-  sudo mkdir -p $GAME_RD_LOC
-  sudo mount -t tmpfs -o size=12288m satisfactory ${GAME_RD_LOC}
+if [ ! -d $ram_game_dir ]; then
+  echo -e "\e[33mramdrive not found...entering validation mode\e[0m"
   
-  #check persistent storage for save files
-  if [ -d "$GAME_SAVES" ]; then
-    #if saves are there, sync them to the ramdrive
-    echo "Directory for persistent saves found, attempting sync..."
-    rsync -a $GAME_SAVES $GAME_RD_LOC
-    wait
-    else
-      #if saves are missing make the directory on the ramdrive for them.
-      echo "Directory for persistent saves not found, creating directory..."
-      sudo mkdir -p $GAME_RD_SAVES
-      sudo chown steam:steam $GAME_RD_SAVES
-  fi
+  # Validation Mode
 
-  #check persistant storage for game binaries
-  if [ -d "$GAME_BINARIES" ]; then
-    #if binaries are there, sync them to the ramdrive
-    echo "Directory for persistent backup of satisfactory binaries found, attempting sync..."
-    rsync -a $GAME_BINARIES $GAME_RD_LOC
-    wait
-    else
-      #if binaries are missing make the directory on the ramdrive for them.
-      echo "Directory for persistent backup of satisfactory binaries not found, creating directory..."
-      sudo mkdir -p $GAME_RD_BINARIES
-  fi
-  
-  #Make sure permissions on RAMDRIVE are good
-  sudo chown -R steam:steam $GAME_RD_LOC
+  # Make sure software is installed
+  install_repo_dependencies
+  install_steam
+  install_common
+  install_jinja2cli
 
-  #Verify Symlink for Save File Redirection is setup
-  #Remember satisfactory runs as steam:steam
-  #Deal with Backup copies & backup current.
-  if [ ! -d $EPIC_SAVE_LOC ]; then
-    mkdir -p $EPIC_SAVE_LOC
-    ln -s $GAME_RD_SAVES $EPIC_SAVE_LOC/server
+  # Create RamDrive Folder & Mount as Drive
+  sudo mkdir -p $ram_game_dir
+  sudo mount -t tmpfs -o size="$ram_drive_size"m satisfactory "$ram_game_dir"
+
+  # Check if persistent saves already exist
+  if [ -d "$persist_game_saves" ]; then
+    # Saves Exist, Copy into RamDrive
+    sudo rsync -a "$persist_game_saves" "$ram_game_dir"
+    wait
   else
-    if [ -d $EPIC_SAVE_LOC/server-old ]; then rm -rf $EPIC_SAVE_LOC/server-old; fi
-    if [ -d $EPIC_SAVE_LOC/server ]; then mv $EPIC_SAVE_LOC/server $EPIC_SAVE_LOC/server-old; fi
-    ln -s $GAME_RD_SAVES $EPIC_SAVE_LOC/server
+    # Saves do NOT exist, create directory structure
+    sudo mkdir -p "$ram_game_saves"
   fi
 
-  #Now that all the framework is in place - run steamcmd to force an update and/or install satisfactory.
-  echo "Run steamcmd to install/update satisfactory"
-  sudo /usr/games/steamcmd +force_install_dir ${GAME_RD_BINARIES} +login anonymous +app_update 1690800 validate +quit
+  # Check if satisfactory binaries and configs already exist
+  if [ -d "$persist_game_bin" ]; then
+    # Binares Exist, Copy into RamDrive
+    sudo rsync -a "$persist_game_bin" "$ram_game_dir"
+    wait
+  else
+    # Binaries do NOT Exist, create directory structure.
+    sudo mkdir -p "$ram_game_bin"
+  fi
 
-  #make sure service file is installed & loaded
+  # Recursively ensure all permissions are correct
+  sudo chown -R "$gameusr":"$gameusr" "$ram_game_dir"
+
+  # Verify Symlinks and Install/Update Satisfactory
+  setup_symlinks $original_save_dir_full_path $ram_game_saves
+  install_satisfactory "$ram_game_bin" "anonymous" "$steamappid"
+
+  # Configure Satisfactory to Run as a Service
+  if [ "$svc_overwrite" == "yes" ]; then
+    delete_satisfactory_service
+  fi
+
   if [ ! -f /etc/systemd/system/satisfactory.service ]; then
-    echo "satisfactory service file not found, installing and enabling service"
-    sudo cp $SCRIPT_DIR/satisfactory.service /etc/systemd/system/
-    sudo systemctl daemon-reload
-    sudo systemctl enable satisfactory
+    install_satisfactory_service $ram_game_bin $host_ip $game_port $gameusr $ram_game_dir $disable_seasonal
   fi
 
-  if [ -f $ENGINE_INI ]; then
-    if [ ! grep -q "$SAVE_ROT_LINE1" "$ENGINE_INI" ] && [ ! grep -q "$SAVE_ROT_LINE2" "$ENGINE_INI" ]; then
-      sudo echo "" >> "$ENGINE_INI"
-      sudo echo "$SAVE_ROT_LINE1" >> "$ENGINE_INI"
-      sudo echo "$SAVE_ROT_LINE2" >> "$ENGINE_INI"
-    elif [ grep -q "$SAVE_ROT_LINE1" "$ENGINE_INI" ] && [ ! grep -q "$SAVE_ROT_LINE2" "$ENGINE_INI" ]; then
-      sed -i "/$SAVE_ROT_LINE1/ a\\$SAVE_ROT_LINE2" "$ENGINE_INI"
-    elif [ grep -q "$SAVE_ROT_LINE2" "$ENGINE_INI" ] && [ ! grep -q "$SAVE_ROT_LINE1" "$ENGINE_INI" ]; then
-      sed -i "/$SAVE_ROT_LINE2/ i\\$SAVE_ROT_LINE1" "$ENGINE_INI"
-    fi
-  fi
+  # Validate Additional Configurations
+  # Number of AutoSaves
+  update_autosave_count $engine_ini $autosave_count
 
-  #start the service
-  echo "starting satisfactory service"
+  # Start The Server
   sudo systemctl start satisfactory
 
-#The following will run everytime this script runs, but the RAMDRIVE is already setup & mounted.
-#Typically this will run periodically as part of a cron job, and will keep copies of
-#saves/binaries somewhere persistent.
 else
-  #checks if folder for persistent saves exists, and if needed creates it.
-  echo "checking for, and if needed creating folder for persistent saves."
-  if [ ! -d $GAME_SAVES ]; then 
-    sudo mkdir -p $GAME_SAVES
-    sudo chown -R steam:steam $GAME_SAVES
+  echo -e "\e[32mramdrive found...entering sync mode[0m"
+
+  # Make sure Persistent Saves Directory Exists
+  if [ ! -d "$persist_game_saves" ]; then 
+    sudo mkdir -p "$persist_game_saves"
+    sudo chown -R "$gameusr":"$gameusr" "$persist_game_saves"
   fi
 
-  #copies any and all saves currently found in the Ramdrive, to the persistent storage.
-  #this OVERWRITES anything in persistent storage.
-  echo "copy current saves to persistent storage"
-  sudo rsync -a --delete $GAME_RD_SAVES $GAME_LOC
+  # Copies all save files from Ramdrive to persistent Storage
+  sudo rsync -a --delete $ram_game_saves $persist_game_dir
 
-  #copies individual save files to apache root - make available to users to download and use in tools
-  #These are small but add up over time.
-  #the www directory has been remounted on its own disk so it won't crash the server.
+  # Game Save Publishing
+
+  # Check for and Create tarball of current histories if enabled
+  if [ "$history_daily_archive" == "yes" ]; then
+    daily_archive $www_historycon $www_history 9
+  fi
+
+  # Cleanup Existing History
+    limit_history $www_history $history_retention
+
+  # Update History
+    make_history $www_root $www_history
+
+  # if enabled, make copies of manual files with keyword
+  if [ "$manual_save_dir" == "yes" ]; then
+    manual_sync $manualkeyword $ram_game_saves $www_manual
+  fi
   
-  HISTORY_SUBFOLDERS=("$WWW_HISTORY"/*)
-  MAX_SUBDIRS=25
-
-  if [ "${#HISTORY_SUBFOLDERS[@]}" -gt "$MAX_SUBDIRS" ]; then
-    SUBFOLDER_TO_DEL=($(ls -t "$WWW_HISTORY" | tail -n +"$((MAX_SUBDIRS + 1))"))
-
-    for subdir in "${SUBFOLDER_TO_DEL[@]}"; do
-      rm -rf "$WWW_HISTORY/$subdir"
-    done
-
-  fi
-
-  #check the www capacity and if over 75% post to discord
-  CURRENT_USAGE_PERCENT=$(df -h "/ssd/www" | awk 'NR==2{print $5}' | tr -d '%')
-  USAGE_THRESHOLD=75
-  WARNING_MESSAGE="WARNING:  Satisfactory Server /SSD mount is at "$CURRENT_USAGE_PERCENT"% Used"
+  # sync the normal autosaves into the webroot
+  autosave_sync $ram_game_saves $www_root
   
-  if [ "$CURRENT_USAGE_PERCENT" -gt "$USAGE_THRESHOLD" ]; then
-    curl -X POST \
-     -H "Content-Type: application/json" \
-     -d "{\"content\":\"$WARNING_MESSAGE\"}" \
-     "$DISC_WH"
+  # copy binaries to persistent storage
+  if [ ! -d "$persist_game_bin" ]; then
+    sudo mkdir -p "$persist_game_bin"
+    sudo chown -R "$gameusr":"$gameusr" "$persist_game_bin"
   fi
-
-  #now lets validate files and copy crap
-  echo "verify folder/file structure"
-
-  if [ ! -d "$WWW_ARCHIVE" ]; then
-    sudo mkdir -p "$WWW_ARCHIVE"
-  fi
-
-  if [ ! -d "$WWW_MANUAL" ]; then
-    sudo mkdir -p "$WWW_MANUAL"
-  fi
-
-  echo "move current saves into history"
-  NEW_HISTORY_PATH="$WWW_HISTORY"/"$(date +"%Y%m%d_%H%M%S")"
-  sudo mkdir -p "$NEW_HISTORY_PATH"
-  find "$WWW_ROOT" -maxdepth 1 -type f ! -name '00*' -exec sudo mv {} "$NEW_HISTORY_PATH" \;
-
-  echo "copy current saves with 'manual' in the name."
-  find "$GAME_SAVES" -maxdepth 1 -type f -name '*manual*' -exec sudo cp -p -f {} "$WWW_MANUAL" \;
-
-  echo "copy current auto-saves to the WWW_ROOT directory"
-  find "$GAME_SAVES" -maxdepth 1 -type f -name '*autosave*' -exec sudo cp -p -f {} "$WWW_ROOT" \;
-
-  #checks if folder for persistent backups of game binaries exists, and if needed creates it.
-  if [ ! -d $GAME_BINARIES ]; then
-    sudo mkdir -p $GAME_BINARIES
-    sudo chown -R steam:steam $GAME_BINARIES
-  fi
-
-  #copies any and all binaries found in the ramdrive, to the persistent storage.
-  #this OVERWRITES ANYTHING in persistent storage.
-  echo "copy current binaries to persistent storage"
-  sudo rsync -a --delete $GAME_RD_BINARIES $GAME_LOC
+  sudo rsync -a --delete "$ram_game_bin" "$persist_game_dir"
   wait
 
+  # check disk capacity
+  if [ "$discord_notify" == "yes" ]; then
+    usage=$(df -h "$www_root" | awk 'NR==2{print $5}' | tr -d '%')
+    message="ALERT: satisfactory Server has a disk at "$usage"% used"
+
+    if [ "$usage" -gt "$notify_threshold" ]; then
+      discord_message $message $discord_webhook
+    fi
 fi

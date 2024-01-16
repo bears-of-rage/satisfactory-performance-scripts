@@ -1,16 +1,16 @@
 [Unit]
-Description=Satisfactory dedicated server
+Description=satisfactory-server
 Wants=network-online.target
 After=syslog.target network.target nss-lookup.target network-online.target
 
 [Service]
 Environment="LD_LIBRARY_PATH=./linux64"
-ExecStart=/tmp/satisfactory-ramdrive/binaries/FactoryServer.sh -multihome=10.11.1.21 -ServerQUeryPort=15777 -DisableSeasonalEvents
-User=steam
-Group=steam
+Execstart={{ bin }}/FactorySever.sh{{ mh }}{{ pt }}{{ de }}
+User={{ usr }}
+Group={{ usr }}
 StandardOutput=journal
 Restart=on-failure
-WorkingDirectory=/tmp/satisfactory-ramdrive/
+WorkingDirectory={{ gamedir }}/
 
 [Install]
 WantedBy=multi-user.target

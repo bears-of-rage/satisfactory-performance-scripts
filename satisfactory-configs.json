@@ -1,0 +1,24 @@
+{
+  "satisfactory-configs":
+    {
+      "sudo_user_account": "steam",
+      "host_server_local_ip:": "10.11.1.21",
+      "satisfactory_query_port": 15777,
+      "disable_seasonal_events_yesno": "yes",
+      "number_of_autosaves": 20,
+      "steamcmd_satisfactory_id": 1690800,
+      "original_save_loc": ".config/Epic/FactoryGame/Saved/SaveGames",
+      "persistent_game_loc": "/games/satisfactory",
+      "ramdrive_size_in_MB": "12288",
+      "ramdrive_game_loc": "/tmp/ramdrive-satisfactory",
+      "history_retention": 15,
+      "history_daily_consolidate_yesno": "yes",
+      "manual_save_keyword": "manual",
+      "manual_save_dir_yesno": "yes",
+      "discord_notify_yesno": "yes",
+      "discord_notify_threshold": 75,
+      "discord_webhook": "",
+      "crontab_interval_in_minutes": 5,
+      "overwrite_existing_service_yesno": "yes"
+    }
+}
